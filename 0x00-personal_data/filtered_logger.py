@@ -1,11 +1,26 @@
 #!/usr/bin/env python3
 """ Filtered logger """
 import logging
+import mysql.connector
+import os
 import re
 from typing import List
 
 
 PII_FIELDS = ('ssn', 'password', 'email', 'phone', 'name')
+
+
+def get_db() -> mysql.connector.connection.MySQLConnection:
+    """ function that returns a connector to the database"""
+
+    h = os.environ.get('PERSONAL_DATA_DB_HOST', 'localhost')
+    u_name = os.environ.get('PERSONAL_DATA_DB_USERNAME', 'root')
+    psswd = os.environ.get('PERSONAL_DATA_DB_PASSWORD', '')
+    db = os.environ.get('PERSONAL_DATA_DB_NAME')
+
+    connect_obj = mysql.connector.connect(
+            host=h, user=u_name, password=psswd, database=db)
+    return connect_obj
 
 
 def filter_datum(
