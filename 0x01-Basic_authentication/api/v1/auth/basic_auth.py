@@ -35,7 +35,7 @@ class BasicAuth(Auth):
             d_str = base64.b64decode(
                     base64_authorization_header, validate=True)
             return d_str.decode('utf-8')
-        except (binascii.Error, TypeError):
+        except (binascii.Error, TypeError, UnicodeDecodeError):
             return None
 
     def extract_user_credentials(
@@ -50,7 +50,7 @@ class BasicAuth(Auth):
             return None, None
         if ':' not in decoded_base64_authorization_header:
             return None, None
-        user_psswd = decoded_base64_authorization_header.split(':')
+        user_psswd = decoded_base64_authorization_header.split(':', 1)
         return tuple(user_psswd)
 
     def user_object_from_credentials(
@@ -75,3 +75,24 @@ class BasicAuth(Auth):
             return None
 
         return user
+
+    def current_user(self, request=None) -> TypeVar('User'):
+        """Overloads Auth and retrieve the User instance for a request"""
+
+        auth_header = self.authorization_header(request)
+        if not auth_header:
+            return None
+        base64_h = self.extract_base64_authorization_header(auth_header)
+        if not base64_h:
+            return None
+        decoded_h = self.decode_base64_authorization_header(base64_h)
+        if not decoded_h:
+            return None
+        user_c, psswd_c = self.extract_user_credentials(decoded_h)
+        if not user_c or not psswd_c:
+            return None
+        user_obj = self.user_object_from_credentials(user_c, psswd_c)
+        if not user_obj:
+            return None
+
+        return user_obj
