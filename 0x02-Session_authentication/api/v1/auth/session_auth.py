@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """ Session auth module """
 from api.v1.auth.auth import Auth
+from flask import request
 import uuid
+from typing import TypeVar
 
 
 class SessionAuth(Auth):
@@ -29,3 +31,17 @@ class SessionAuth(Auth):
             return None
         User_id = SessionAuth.user_id_by_session_id.get(session_id)
         return User_id
+
+    def current_user(self, request=None) -> TypeVar('User'):
+        """Function that returns a User instance based on a cookie value"""
+        from models.user import User
+
+        cookie_val = self.session_cookie(request)
+        if cookie_val is None:
+            return None
+        id_user = self.user_id_for_session_id(cookie_val)
+        if id_user is None:
+            return None
+        user = User.get(id_user)
+
+        return user
